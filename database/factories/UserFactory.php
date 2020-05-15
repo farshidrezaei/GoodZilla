@@ -20,9 +20,18 @@ use Illuminate\Support\Str;
 $factory->define(User::class, function (Faker $faker) {
     return [
         'name' => $faker->name,
+        'username' => $faker->unique()->userName,
+        'gender' => $faker->randomElement(['male', 'female', 'unknown']),
+        'avatar' => 'lorempic/' . mt_rand(1, 10).'.jpg',
+        'mobile' => $faker->phoneNumber,
+        'profession' => $faker->jobTitle,
+        'birthday' => \Carbon\Carbon::create(
+            mt_rand(1990, 2020),
+            mt_rand(1, 12),
+            mt_rand(1, 30))->format('Y/m/d'),
+        'biography' => $faker->paragraph,
         'email' => $faker->unique()->safeEmail,
         'email_verified_at' => now(),
-        'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
         'remember_token' => Str::random(10),
     ];
 });

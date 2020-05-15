@@ -1,5 +1,6 @@
 <?php
 
+use App\Article;
 use App\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
@@ -21,45 +22,73 @@ class PermissionsInitSeeder extends Seeder
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // create permissions
-        Permission::create(['name' => 'edit articles']);
-        Permission::create(['name' => 'delete articles']);
-        Permission::create(['name' => 'publish articles']);
-        Permission::create(['name' => 'unpublish articles']);
+        Permission::create(['name' => 'edit articles', 'fa_name' => 'ویرایش مقاله']);
+        Permission::create(['name' => 'delete articles', 'fa_name' => 'حذف مقاله']);
 
         // create roles and assign existing permissions
-        $role1 = Role::create(['name' => 'writer']);
-        $role1->givePermissionTo('edit articles');
-        $role1->givePermissionTo('delete articles');
+        $simple = Role::create(['name' => 'simple', 'fa_name' => 'عادی']);
+        $simple->givePermissionTo('edit articles');
+        $simple->givePermissionTo('delete articles');
 
-        $role2 = Role::create(['name' => 'admin']);
-        $role2->givePermissionTo('publish articles');
-        $role2->givePermissionTo('unpublish articles');
+        $vip = Role::create(['name' => 'vip', 'fa_name' => 'ویژه']);
+        $vip->givePermissionTo('edit articles');
+        $vip->givePermissionTo('delete articles');
 
-        $role3 = Role::create(['name' => 'super-admin']);
+        $superVip = Role::create(['name' => 'super-vip', 'fa_name' => 'فوق ویژه']);
+        $superVip->givePermissionTo('edit articles');
+        $superVip->givePermissionTo('delete articles');
+
+
+        $admin = Role::create(['name' => 'admin', 'fa_name' => 'مدیر']);
+        $admin->givePermissionTo('edit articles');
+        $admin->givePermissionTo('delete articles');
+
+
+        $superAdmin = Role::create(['name' => 'super-admin', 'fa_name' => 'مدیرکل']);
         // gets all permissions via Gate::before rule; see AuthServiceProvider
 
         // create demo users
-        $user = Factory(App\User::class)->create([
-            'name' => 'Example User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('123123123')
+        $simpleUser = Factory(App\User::class)->create([
+            'name' => 'Simple User',
+            'username' => 'simpleuser',
+            'email' => 'simple@user.com',
+            'password' => Hash::make('123123123')
 
         ]);
-        $user->assignRole($role1);
+        $simpleUser->assignRole($simple);
 
-        $user = Factory(App\User::class)->create([
-            'name' => 'Example Admin User',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('123123123')
+
+        $vipUser = Factory(App\User::class)->create([
+            'name' => 'Vip User',
+            'username' => 'vipuser',
+            'email' => 'vip@user.com',
+            'password' => Hash::make('123123123')
         ]);
-        $user->assignRole($role2);
+        $vipUser->assignRole($vip);
 
-        $user = User::create([
+
+        $superVipUser = Factory(App\User::class)->create([
+            'name' => 'Super Vip User',
+            'username' => 'supervipuser',
+            'email' => 'supervip@user.com',
+            'password' => Hash::make('123123123')
+        ]);
+        $superVipUser->assignRole($superVip);
+
+
+        $superAdminUser = Factory(App\User::class)->create([
             'name' => 'Farshid Rezaei',
+            'username' => 'farshidrezaei',
             'email' => 'farshid@gmail.com',
-            'password' => bcrypt('123123')
+            'password' => Hash::make('123123123')
         ]);
+        $superAdminUser->assignRole($superAdmin);
 
-        $user->assignRole($role3);
+
+        Factory(App\User::class, 20)->create()->each(function (User $user) use ($simple) {
+            $user->assignRole($simple);
+
+
+        });
     }
 }
