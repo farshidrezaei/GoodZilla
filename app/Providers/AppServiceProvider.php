@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Services\Responder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
+use App\Article;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -12,11 +14,17 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
-        Relation::morphMap([
-            'articles' => 'App\Article',
-        ]);
+        Relation::morphMap( [
+                                'articles' => Article::class,
+                            ] );
+
+
+        $this->app->singleton( 'responder', static function () {
+            return new Responder();
+        } );
+
     }
 
     /**
@@ -24,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         //
     }

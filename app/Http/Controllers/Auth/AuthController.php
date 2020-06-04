@@ -5,19 +5,21 @@ namespace App\Http\Controllers\Auth;
 use App;
 use App\Helpers\NumberHelper;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
-use App\Http\Requests\RegisterRequest;
-use App\Rules\VerificationCode;
+use App\Http\Requests\Auth\EmailCheckRequest;
+use App\Http\Requests\Auth\VerificationCodeCheckRequest;
+use App\Services\Responder;
 use App\User;
-use Carbon\Carbon;
-use Hash;
+use App\Http\Resources\User as UserResource;
+use Exception;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
-use Str;
+
 
 class AuthController extends Controller
 {
+    use App\Traits\AuthTrait;
+
     /**
      * Create a new AuthController instance.
      *
@@ -25,159 +27,129 @@ class AuthController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth:api', [
+        $this->middleware( 'auth:api', [
             'except' => [
                 'verify',
-                'resend',
+                'resendVerificationCode',
                 'checkEmail',
                 'checkVerificationCode',
-            ]]);
-    }
-
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function checkEmail(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email'
-        ]);
-
-        $user = User::whereEmail($request->email)->first();
-        if (!$user) {
-            $user = new User();
-            $user->email = $request->email;
-            $user->save();
-            $user->timestamps = false;
-            $user->assignRole('simple');
-        }
-        $user->verification_code = (new NumberHelper)->verificationCodeGenerator();
-        $user->timestamps = false;
-        $user->save();
-        $user->sendApiEmailVerificationNotification();
-        return response()->json(
-            app()->getLocale() === 'fa'
-                ? 'جهت تایید ایمیل خود، از طریق کد تایید ارسالی به ایمیل وارد شده اقدام نمایید.'
-                : 'Please confirm your email by inserting verification code sent to you on your email',
-            200);
-
+            ],
+        ] );
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
+     * @param EmailCheckRequest $request
+     *
+     * @return array
+     * @throws Exception
      */
-    public function checkVerificationCode(Request $request)
+    public function checkEmail( EmailCheckRequest $request ): array
     {
-        $request->validate([
-            'email' => 'required|email',
-            'verification_code' => ['required', new VerificationCode]
-        ]);
+
+        $user = $this->getOrCreateUserByEmail( $request->email );
+
+        $this->generateVerificationCode( $user );
+
+        $user->sendVerificationCodeEmail();
 
 
-
-        $user = User::whereEmail($request->email)->first();
-        if (!$user) {
-            abort(404);
-        }
-
-        if (mb_strtoupper($request->verification_code) === $user->verification_code) {
-            $user->timestamps = false;
-            $user->email_verified_at = Carbon::now();
-            $user->save();
-            if (!$token = auth()->login($user)) {
-                return response()->json([
-                    'error' => app()->getLocale() === 'fa'
-                        ? 'خطا'
-                        : 'Error'
-                ], 500);
-            }
-             return $this->respondWithToken($token);
-        }
-        return response()->json([
-            'error' => app()->getLocale() === 'fa'
-                ? 'کد تایید اشتباه است.'
-                : 'Verification code is invalid.'
-        ], 401);
-
+        responder()->message( trans( 'messages.check_email' ) )
+            ->body( [
+                'verification_code' => env( 'APP_DEBUG' )
+                    ? $user->verification_code->code
+                    : null,
+            ] )
+            ->json()
+            ->send();
     }
+
 
     /**
      * Get the authenticated User.
      *
-     * @return JsonResponse
+     * @param
+     *
+     * @return void
      */
-    public function user()
+    public function user(): void
     {
-        return response()->json(['user' => auth()->user()]);
+        $user = new UserResource(
+            auth()->user()
+                ->load( [
+                    'roles:id,role_id,name,fa_name',
+                    'roles.permissions:id,role_id,name,fa_name',
+                    'wallet',
+                ] ) );
+
+        responder()->body( [ 'user' => $user ] )->json()->send();
     }
 
     /**
      * Log the user out (Invalidate the token).
      *
-     * @return JsonResponse
+     * @param
+     *
+     * @return void
      */
-    public function logout()
+    public function logout(): void
     {
         auth()->logout();
-
-        return response()->json(['message' => 'Successfully logged out']);
+        responder()->message( 'Successfully logged out' )->json()->send();
     }
 
     /**
      * Refresh a token.
      *
-     * @return JsonResponse
+     * @param
+     *
+     * @return void
      */
-    public function refresh()
+    public function refresh(): void
     {
-        return $this->respondWithToken(auth()->refresh());
+        responder()->message( 'شما با موفقیت وارد سایت شدید.' )
+            ->body( [
+                'access_token' => auth()->refresh(),
+                'token_type' => 'bearer',
+                'expires_in' => auth()->factory()->getTTL() * 60,
+            ] )
+            ->json()
+            ->send();
+
     }
 
     /**
      * Get the token array structure.
      *
-     * @param string $token
+     * @param EmailCheckRequest $request
      *
-     * @return JsonResponse
+     * @return void
+     * @throws Exception
      */
-    protected function respondWithToken($token)
+    public function resendVerificationCode( EmailCheckRequest $request ): void
     {
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => auth()->factory()->getTTL() * 60
-        ]);
-    }
 
-
-    public function resend(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email'
-        ]);
-
-        $user = User::whereEmail($request->email)->first();
-        if (!$user) {
-            abort(404);
-        }
-
-        $user->verification_code = (new NumberHelper)->verificationCodeGenerator();
+        $user = $this->getUser( $request );
+        $this->abortIfVerificationCodeHasNotBeenExpired( $user );
+        $this->generateVerificationCode( $user );
         $user->save();
-        $user->sendApiEmailVerificationNotification();
-        return response()->json(
-            app()->getLocale() === 'fa'
-                ? 'ایمیلی حاوی کد تایید جدید، مجددا برای شما ارسال شد.'
-                : 'New verification code has sent to your email.',
-            200);
+        $user->sendVerificationCodeEmail();
+        responder()->message( app()->getLocale() === 'fa' ? 'ایمیلی حاوی کد تایید جدید، مجددا برای شما ارسال شد.' : 'New verification code has sent to your email.' )
+            ->json()
+            ->send();
 
     }
 
-
-    public function verify(Request $request)
+    /**
+     * @param VerificationCodeCheckRequest $request
+     *
+     * @return void
+     */
+    public function checkVerificationCode( VerificationCodeCheckRequest $request ): void
     {
+        $user = $this->getUser( $request );
 
+        $this->checkVerificationCodeAndLogin( $request, $user );
     }
+
+
 }

@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Article;
 use App\Comment;
+use Doctrine\DBAL\Query\QueryBuilder;
 use Exception;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 
 class ArticleController extends Controller
@@ -14,82 +18,84 @@ class ArticleController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator|JsonResponse
+     * @param Request $request
+     *
+     * @return LengthAwarePaginator|JsonResponse
      */
-    public function index(Request $request)
+    public function index( Request $request )
     {
-        $type = $request->type;
-        $expect = $request->expect;
-        $take = $request->take;
-        $orderBy = $request->orderBy;
-        $articles = Article::query()->withCount('comments','likes');
-        $articles->when($expect, function ($query, $expect) {
-            return $query->whereNotIn('slug', Arr::flatten([$expect]));
-        });
-        $articles->when($orderBy, function ($query, $orderBy) {
-            switch ($orderBy) {
+        $articles = Article::withCount( [ 'comments', 'likes' ] );
+
+        $articles->when( $request->expect, static function ( Builder $query, $expect ) {
+            return $query->whereNotIn( 'slug', Arr::flatten( [ $expect ] ) );
+        } );
+
+        $articles->when( $request->orderBy, static function ( Builder $query, $orderBy ) {
+            switch ( $orderBy ) {
                 case 'latest':
                     return $query->latest();
                     break;
                 case 'popular':
-                    return $query->orderByDesc('likes_count');
+                    return $query->orderByDesc( 'likes_count' );
                     break;
                 case 'visit':
                 case 'oldest':
                     return $query->oldest();
                     break;
             }
-        });
+        } );
 
-        switch ($type) {
+        switch ( $request->type ) {
             case 'suggested':
             case 'popular':
             case 'latest':
-                $articles = $articles->take($take);
                 break;
             case 'pagination':
-                return response()->json($articles->paginate($take));
+                return response()->json( $articles->paginate( $request->take ) );
                 break;
         }
 
-        $articles = $articles->get();
+        $articles = $articles->take( $request->take )->get();
 
-        return response()->json($articles);
+        return response()->json( $articles );
     }
 
     /**
      * Display the specified resource.
      *
      * @param $slug
-     * @return JsonResponse|\Illuminate\Http\Response
+     *
+     * @return JsonResponse|Response
      */
-    public function show($slug)
+    public function show( $slug )
     {
-        $item = Article::with([
-            'comments' => function ($comment) {
-                $comment->with(['user', 'children.user']);
+        $item = Article::with( [
+            'comments' => static function ( $comment ) {
+                $comment->with( [ 'user', 'children.user' ] );
             },
-            'user'
-        ])->whereSlug($slug)->first();
-        return response()->json($item);
+            'user',
+        ] )->whereSlug( $slug )->first();
+        return response()->json( $item );
     }
 
     /**
      * like the specified resource.
      *
      * @param $id
+     *
      * @return JsonResponse|void
      */
-    public function toggleLike($id)
+    public function toggleLike( $id )
     {
-        $article = Article::findOrFail($id);
+        $article = Article::findOrFail( $id );
         try {
-            $status = $article->likes()->toggle(auth()->user()->id);
-            $result = count($status['attached']) ? true : false;
+            $status = $article->likes()->toggle( auth()->user()->id );
+            $result = count( $status[ 'attached' ] ) ? true : false;
 
-            return response()->json(['result' => $result]);
-        } catch (Exception $e) {
-            return response()->json($e, 500);
+            return response()->json( [ 'result' => $result ] );
+        }
+        catch ( Exception $e ) {
+            return response()->json( $e, 500 );
 
         }
     }
@@ -99,18 +105,20 @@ class ArticleController extends Controller
      * like the specified resource.
      *
      * @param $id
+     *
      * @return JsonResponse|void
      */
-    public function toggleBookmark($id)
+    public function toggleBookmark( $id )
     {
-        $article = Article::findOrFail($id);
+        $article = Article::findOrFail( $id );
         try {
-            $status = $article->bookmarks()->toggle(auth()->user()->id);
-            $result = count($status['attached']) ? true : false;
+            $status = $article->bookmarks()->toggle( auth()->user()->id );
+            $result = count( $status[ 'attached' ] ) ? true : false;
 
-            return response()->json(['result' => $result]);
-        } catch (Exception $e) {
-            return response()->json($e, 500);
+            return response()->json( [ 'result' => $result ] );
+        }
+        catch ( Exception $e ) {
+            return response()->json( $e, 500 );
 
         }
     }
@@ -118,20 +126,23 @@ class ArticleController extends Controller
     /**
      * save comment for the specified resource.
      *
-     * @param $id
+     * @param Request $request
+     * @param         $id
+     *
      * @return JsonResponse|void
      */
-    public function comment(Request $request, $id)
+    public function comment( Request $request, $id )
     {
-        $article = Article::findOrFail($id);
+        $article = Article::findOrFail( $id );
         try {
-            $article->comments()->create([
+            $article->comments()->create( [
                 'user_id' => auth()->user()->id,
-                'body' => $request->body
-            ]);
-            return response()->json(['message'=>'comment sent.']);
-        } catch (Exception $e) {
-            return response()->json($e, 500);
+                'body' => $request->body,
+            ] );
+            return response()->json( [ 'message' => 'comment sent.' ] );
+        }
+        catch ( Exception $e ) {
+            return response()->json( $e, 500 );
         }
     }
 

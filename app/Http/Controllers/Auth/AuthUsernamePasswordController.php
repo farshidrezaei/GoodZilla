@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Str;
 
-class AuthController extends Controller
+class AuthUsernamePasswordController extends Controller
 {
     /**
      * Create a new AuthController instance.
@@ -65,7 +65,7 @@ class AuthController extends Controller
             'verification_code' => (new NumberHelper)->verificationCodeGenerator()
         ]);
         $user->assignRole('simple');
-        $user->sendApiEmailVerificationNotification();
+        $user->sendVerificationCodeEmail();
         return response()->json(
             app()->getLocale() === 'fa'
                 ? 'حساب شما با موفقیت ایجاد شد. جهت تایید ایمیل خود، از طریق پیام ارسال شده به ایمیل وارد شده اقدام نمایید.'

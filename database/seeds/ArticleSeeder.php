@@ -21,20 +21,9 @@ class ArticleSeeder extends Seeder
                     ->comments()
                     ->saveMany(factory(Comment::class, 5)
                         ->make([
-                            'commentable_id'=>$article->id,
-                            'commentable_type'=>Article::class
-                        ])
-                        ->each(function (Comment $comment)use($article) {
-                            $comment
-                                ->children()
-                                ->saveMany(factory(Comment::class,5 )
-                                    ->make([
-                                        'commentable_id'=>$article->id,
-                                        'commentable_type'=>Article::class,
-                                        'parent_id'=>$comment->id
-                                    ]));
-
-                    }));
+                            'commentable_id' => $article->id,
+                            'commentable_type' => Article::class
+                        ]));
             });
     }
 }

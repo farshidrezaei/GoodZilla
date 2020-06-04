@@ -4,7 +4,7 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 
-class VerificationCode implements Rule
+class VerificationCodeRule implements Rule
 {
     /**
      * Create a new rule instance.
@@ -19,13 +19,14 @@ class VerificationCode implements Rule
     /**
      * Determine if the validation rule passes.
      *
-     * @param  string  $attribute
-     * @param  mixed  $value
+     * @param string $attribute
+     * @param mixed  $value
+     *
      * @return bool
      */
-    public function passes($attribute, $value)
+    public function passes( $attribute, $value ): bool
     {
-        return (bool)preg_match('/^(?=.*\d.*\d.*\d)(?=.*[a-zA-Z].*[a-zA-Z].*[a-zA-Z]).{6}$/',$value);
+        return (bool)preg_match( '/^(?=.*\d.*\d.*\d)(?=.*[a-zA-Z].*[a-zA-Z].*[a-zA-Z]).{6}$/', $value );
     }
 
     /**
@@ -34,8 +35,8 @@ class VerificationCode implements Rule
      *
      * @return string
      */
-    public function message()
+    public function message(): string
     {
-        return trans('validation.verificationCode');
+        return trans( 'validation.verificationCode' );
     }
 }

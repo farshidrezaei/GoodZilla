@@ -4,19 +4,26 @@
 namespace App\Helpers;
 
 
+use Exception;
+
 class NumberHelper
 {
-    public function verificationCodeGenerator()
+    public function verificationCodeGenerator(): ?string
     {
         // Available alpha characters
         $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-        // generate a pin based on 2 * 7 digits + a random character
-        $pin = mt_rand(100, 999)
-            . $characters[rand(0, strlen($characters) - 1)]
-            . $characters[rand(0, strlen($characters) - 1)]
-            . $characters[rand(0, strlen($characters) - 1)];
+        try {
+            $pin = random_int( 100, 999 )
+                . $characters[ random_int( 0, strlen( $characters ) - 1 ) ]
+                . $characters[ random_int( 0, strlen( $characters ) - 1 ) ]
+                . $characters[ random_int( 0, strlen( $characters ) - 1 ) ];
+            return str_shuffle( $pin );
+        }
+        catch ( Exception $e ) {
+            throw $e;
+        }
         // shuffle the result
-        return str_shuffle($pin);
+
     }
 }

@@ -5,7 +5,7 @@ namespace PHPSTORM_META {
 
    /**
     * PhpStorm Meta file, to provide autocomplete information for PhpStorm
-    * Generated on 2020-05-14 15:57:03.
+    * Generated on 2020-05-22 15:39:09.
     *
     * @author Barry vd. Heuvel <barryvdh@gmail.com>
     * @see https://github.com/barryvdh/laravel-ide-helper
@@ -157,6 +157,7 @@ namespace PHPSTORM_META {
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'redirect' => \Illuminate\Routing\Redirector::class,
         'redis' => \Illuminate\Redis\RedisManager::class,
+        'responder' => \App\Services\Responder::class,
         'router' => \Illuminate\Routing\Router::class,
         'scout_elastic.client' => \Elasticsearch\Client::class,
         'session' => \Illuminate\Session\SessionManager::class,
@@ -330,6 +331,7 @@ namespace PHPSTORM_META {
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'redirect' => \Illuminate\Routing\Redirector::class,
         'redis' => \Illuminate\Redis\RedisManager::class,
+        'responder' => \App\Services\Responder::class,
         'router' => \Illuminate\Routing\Router::class,
         'scout_elastic.client' => \Elasticsearch\Client::class,
         'session' => \Illuminate\Session\SessionManager::class,
@@ -503,6 +505,7 @@ namespace PHPSTORM_META {
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'redirect' => \Illuminate\Routing\Redirector::class,
         'redis' => \Illuminate\Redis\RedisManager::class,
+        'responder' => \App\Services\Responder::class,
         'router' => \Illuminate\Routing\Router::class,
         'scout_elastic.client' => \Elasticsearch\Client::class,
         'session' => \Illuminate\Session\SessionManager::class,
@@ -676,6 +679,7 @@ namespace PHPSTORM_META {
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'redirect' => \Illuminate\Routing\Redirector::class,
         'redis' => \Illuminate\Redis\RedisManager::class,
+        'responder' => \App\Services\Responder::class,
         'router' => \Illuminate\Routing\Router::class,
         'scout_elastic.client' => \Elasticsearch\Client::class,
         'session' => \Illuminate\Session\SessionManager::class,
@@ -849,6 +853,7 @@ namespace PHPSTORM_META {
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'redirect' => \Illuminate\Routing\Redirector::class,
         'redis' => \Illuminate\Redis\RedisManager::class,
+        'responder' => \App\Services\Responder::class,
         'router' => \Illuminate\Routing\Router::class,
         'scout_elastic.client' => \Elasticsearch\Client::class,
         'session' => \Illuminate\Session\SessionManager::class,
@@ -1022,6 +1027,7 @@ namespace PHPSTORM_META {
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'redirect' => \Illuminate\Routing\Redirector::class,
         'redis' => \Illuminate\Redis\RedisManager::class,
+        'responder' => \App\Services\Responder::class,
         'router' => \Illuminate\Routing\Router::class,
         'scout_elastic.client' => \Elasticsearch\Client::class,
         'session' => \Illuminate\Session\SessionManager::class,
@@ -1195,6 +1201,7 @@ namespace PHPSTORM_META {
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'redirect' => \Illuminate\Routing\Redirector::class,
         'redis' => \Illuminate\Redis\RedisManager::class,
+        'responder' => \App\Services\Responder::class,
         'router' => \Illuminate\Routing\Router::class,
         'scout_elastic.client' => \Elasticsearch\Client::class,
         'session' => \Illuminate\Session\SessionManager::class,
@@ -1368,6 +1375,7 @@ namespace PHPSTORM_META {
         'queue.worker' => \Illuminate\Queue\Worker::class,
         'redirect' => \Illuminate\Routing\Redirector::class,
         'redis' => \Illuminate\Redis\RedisManager::class,
+        'responder' => \App\Services\Responder::class,
         'router' => \Illuminate\Routing\Router::class,
         'scout_elastic.client' => \Elasticsearch\Client::class,
         'session' => \Illuminate\Session\SessionManager::class,

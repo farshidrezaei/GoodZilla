@@ -5,30 +5,30 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Http\Request;
-use phpDocumentor\Reflection\Types\Collection;
 
 class UserController extends Controller
 {
-    protected $user;
 
-    public function __construct(User $user)
-    {
-        $this->user = $user;
-    }
 
-    public function update(Request $request)
+    public function update( Request $request ): ?array
     {
         return $request->toArray();
         $user = auth()->user();
         $user->name = 'abbas';
         $user->save();
-        return $user;
+
+        responder()->body( $user )
+            ->json()
+            ->send();
     }
 
-    public function bookmarks()
+    public function bookmarks(): void
     {
-        $bookmarks = auth()->user()->bookmarks->groupBy('pivot.bookmarkable_type');
-        return response()->json($bookmarks);
+        $bookmarks = auth()->user()->bookmarks->groupBy( 'pivot.bookmarkable_type' );
+        responder()->message( 'User Bookmarks' )
+            ->body( [ 'bookmarks' => $bookmarks ] )
+            ->json()
+            ->send();
     }
 
 }
